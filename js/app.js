@@ -21,6 +21,11 @@ $(document).ready(function() {
     // Scoreboard & Guess button event
     //
 
+    let entries = JSON.parse(localStorage.getItem('topTenEntries')) || [];
+  
+    // Initial render
+    renderList();
+
     // Init Timer
     resetTimer();
 
@@ -29,6 +34,61 @@ $(document).ready(function() {
         var value = mode.options[mode.selectedIndex].value;
         console.log(value);
         document.location.search = value;
+    }
+
+    function renderList() {
+        // Clear current list
+        topTenList.innerHTML = '';
+        
+        if (entries.length === 0) {
+            topTenList.innerHTML = '<li>No entries yet. Add some!</li>';
+            return;
+        }
+        
+        // Get the highest and lowest scores for styling
+        const highestScore = entries.length > 0 ? entries[0].points : 0;
+        const lowestScore = entries.length > 0 ? entries[entries.length - 1].points : 0;
+        
+        // Create list items
+        entries.forEach((entry, index) => {
+            const li = document.createElement('li');
+            
+            // Add different classes for highest and lowest scores
+            if (entry.points === highestScore) {
+                li.classList.add('high-score');
+            } else if (entry.points === lowestScore) {
+                li.classList.add('low-score');
+            }
+            
+            li.textContent = `${entry.name}: ${entry.points} points`;
+            topTenList.appendChild(li);
+        });
+    }
+
+    function addEntry(name, points) {
+        
+        if (!name || isNaN(points)) {
+            alert('Please enter both a name and valid points value');
+            return;
+        }
+        
+        // Add new entry
+        entries.push({ name, points });
+        
+        // Sort entries by points (descending)
+        entries.sort((a, b) => b.points - a.points);
+        
+        // Keep only top 10 entries
+        if (entries.length > 10) {
+            entries = entries.slice(0, 10);
+        }
+        
+        // Save to localStorage
+        localStorage.setItem('topTenEntries', JSON.stringify(entries));
+        
+        // Render updated list
+        renderList();
+        
     }
 
     // Timer
@@ -86,6 +146,7 @@ $(document).ready(function() {
 
     // End of game 'play again' button click
     $('#endGame').on('click', '.playAgain', function () {
+        addEntry(document.getElementById('entryName').value.trim(), totalScore);
         window.location.reload();
     });
 
